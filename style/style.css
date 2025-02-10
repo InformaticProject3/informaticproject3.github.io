@@ -119,12 +119,9 @@ body {
 .footer {
   margin-top: 40px;
   padding: 20px;
-
-
   color: #777;
   font-size: 14px;
 }
-
 .nav-link{
   color:white;
 }
@@ -132,6 +129,7 @@ body {
 .nav-link:hover{
   color: yellow;
 }
+
 .bgvideo {
   position: fixed;  
   top: 0;
@@ -196,16 +194,27 @@ p#xp,
 .point{
   color: aquamarine;
 }
-.task-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; border-radius: 5px; }
+
+.task-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+
 .difficulty{
   background-color: #6a67ce;
   color: aquamarine;
-
 }
+
 .difficulty-selector{
   display: inline;
   flex-direction: row;
 }
+
 #addNewTaskBtn{
   background-color: black;
   display: flex;
@@ -214,31 +223,39 @@ p#xp,
 
 .modal-content{
   background-color: black;
+
 }
 .modal-title{
   color: aquamarine; 
 }
+
 .form-check-label{
   color: aquamarine;
 }
+
 .form-label{
   color: yellow;
 }
+
 .avatar-section{
   align-items: center;
 }
+
 #saveTaskBtn{
   background-color: yellow;
   color: black;
 }
+
 #closeTaskBtn{
   background-color: gray;
   color: white;
 }
+
 #taskId{
   background-color: black;
   color: white;
 }
+
 #taskList>button{
   background-color: black;
 }
