@@ -45,7 +45,6 @@
         <img id="avatarImg" src="file/I love Fubuki__ Image.gif" class="avatar img" alt="avatar">
       </div>
       <input type="file" id="avatarInput" accept="image/*">
-      <button id="saveAvatarBtn">Save Avatar</button>
       <div class="level">
         <h2>Level <span id="level">1</span></h2>
         <p class="point"><span id="xp">0</span> XP</p>
@@ -53,20 +52,66 @@
     </section>
 
     <section class="tasks-section">
+      <button id="addNewTaskBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#taskModal">
+        +
+      </button>
       <h3 class="daily-Task">Daily Tasks</h3>
       <ul class="task-list" id="taskList">
         <!-- Tasks will be dynamically added here -->
       </ul>
-
-      <!-- Form for adding new task -->
-      <div class="add-task-form">
-        <input type="text" id="newTaskName" placeholder="Task name" class="form-control" />
-        <input type="number" id="newTaskPoints" placeholder="Points" class="form-control" />
-        <button id="addTaskBtn" class="btn btn-primary">Add Task</button>
-      </div>
     </section>
 
-<!--     <button id="resetProgressBtn" class="btn btn-danger">Reset Progress</button> -->
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="taskType" class="form-label">Task Type</label>
+              <input type="text" class="form-control" id="taskType" placeholder="Enter task type">
+            </div>
+            <div class="mb-3">
+              <label for="taskDescription" class="form-label">Task Description</label>
+              <textarea class="form-control" id="taskDescription" rows="3" placeholder="Enter task description"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Difficulty Level</label>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="difficulty" id="easy" value="easy">
+                <label class="form-check-label" for="easy">Easy</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="difficulty" id="medium" value="medium">
+                <label class="form-check-label" for="medium">Medium</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="difficulty" id="hard" value="hard">
+                <label class="form-check-label" for="hard">Hard</label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="closeTaskBtn" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="taskDescriptionModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Task Description</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="taskDescriptionContent"></div>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">
@@ -104,41 +149,74 @@
     }
 
     // Add new task
-    function addTask(taskName, points) {
+    function addTask(taskName, description, difficulty) {
+      let points = 0;
+      // Assign points based on difficulty level
+      switch (difficulty) {
+        case "easy":
+          points = 100;
+          break;
+        case "medium":
+          points = 200;
+          break;
+        case "hard":
+          points = 300;
+          break;
+        default:
+          points = 0;
+          break;
+      }
+
       const taskList = document.getElementById("taskList");
       const taskId = "task" + Date.now(); // Unique ID for task
       const newTaskItem = document.createElement("li");
       newTaskItem.classList.add("task-item");
       newTaskItem.innerHTML = `
-        <span>${taskName}</span>
+        <span><strong>${taskName}</strong> (${difficulty}) - ${description}</span>
         <button id="${taskId}" onclick="completeTask(this, '${taskId}', ${points})">Complete</button>
-        <button onclick="editTask('${taskId}')">Edit</button>
         <button onclick="deleteTask('${taskId}')">Delete</button>
       `;
       taskList.appendChild(newTaskItem);
 
       // Save task to localStorage
-      tasks.push({ id: taskId, name: taskName, points: points });
+      tasks.push({ id: taskId, name: taskName, points: points, difficulty: difficulty, description: description });
       localStorage.setItem("tasks", JSON.stringify(tasks));
     }
 
-    // Edit task
-    function editTask(taskId) {
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        const newTaskName = prompt("Edit task name", task.name);
-        const newPoints = prompt("Edit points", task.points);
+    // Save task on modal button click
+    document.getElementById("saveTaskBtn").addEventListener("click", () => {
+      const taskName = document.getElementById("taskType").value;
+      const description = document.getElementById("taskDescription").value;
+      const difficulty = document.querySelector('input[name="difficulty"]:checked')?.value;
 
-        if (newTaskName && !isNaN(newPoints) && newPoints > 0) {
-          task.name = newTaskName;
-          task.points = parseInt(newPoints);
-          localStorage.setItem("tasks", JSON.stringify(tasks));
-          document.getElementById(taskId).previousElementSibling.textContent = newTaskName;
-        } else {
-          alert("Invalid input.");
-        }
+      if (taskName && description && difficulty) {
+        addTask(taskName, description, difficulty);
+        document.getElementById("taskType").value = "";
+        document.getElementById("taskDescription").value = "";
+        document.querySelector('input[name="difficulty"]:checked').checked = false;
+        $('#taskModal').modal('hide');  // Close the modal
+      } else {
+        alert("Please fill out all fields correctly.");
       }
-    }
+    });
+
+    // Edit task
+    // function editTask(taskId) {
+    //   const task = tasks.find(t => t.id === taskId);
+    //   if (task) {
+    //     const newTaskName = prompt("Edit task name", task.name);
+    //     const newPoints = prompt("Edit points", task.points);
+
+    //     if (newTaskName && !isNaN(newPoints) && newPoints > 0) {
+    //       task.name = newTaskName;
+    //       task.points = parseInt(newPoints);
+    //       localStorage.setItem("tasks", JSON.stringify(tasks));
+    //       document.getElementById(taskId).previousElementSibling.textContent = newTaskName;
+    //     } else {
+    //       alert("Invalid input.");
+    //     }
+    //   }
+    // }
 
     // Delete task
     function deleteTask(taskId) {
@@ -147,30 +225,9 @@
       document.getElementById(taskId).parentElement.remove();
     }
 
-    // Reset daily tasks
-    function resetDailyTasks() {
-      const lastResetDate = localStorage.getItem("lastResetDate");
-      const todayDate = new Date().toLocaleDateString();
-
-      if (lastResetDate !== todayDate) {
-        localStorage.setItem("lastResetDate", todayDate); // Update last reset date
-        completedTasks = {}; // Reset task completion status
-        localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
-
-        // Remove completed task statuses
-        const buttons = document.querySelectorAll('.task-item button');
-        buttons.forEach(button => {
-          if (!completedTasks[button.id]) {
-            button.disabled = false;
-            button.textContent = "Complete";
-          }
-        });
-      }
-    }
-
     // Load tasks on page load
     document.addEventListener("DOMContentLoaded", () => {
-      resetDailyTasks();
+      updateLevel();
 
       // Load tasks from localStorage
       tasks.forEach(task => {
@@ -178,9 +235,8 @@
         const newTaskItem = document.createElement("li");
         newTaskItem.classList.add("task-item");
         newTaskItem.innerHTML = `
-          <span>${task.name}</span>
+          <span><strong>${task.name}</strong> (${task.difficulty}) - ${task.description}</span>
           <button id="${task.id}" onclick="completeTask(this, '${task.id}', ${task.points})">Complete</button>
-          <button onclick="editTask('${task.id}')">Edit</button>
           <button onclick="deleteTask('${task.id}')">Delete</button>
         `;
         taskList.appendChild(newTaskItem);
@@ -192,133 +248,88 @@
           button.textContent = "✅ Completed";
         }
       });
-
-      // Event listener for adding a new task
-      document.getElementById("addTaskBtn").addEventListener("click", () => {
-        const taskName = document.getElementById("newTaskName").value;
-        const points = parseInt(document.getElementById("newTaskPoints").value);
-
-        if (taskName && !isNaN(points) && points > 0) {
-          addTask(taskName, points);
-          document.getElementById("newTaskName").value = "";
-          document.getElementById("newTaskPoints").value = "";
-        } else {
-          alert("Please enter valid task details.");
-        }
-      });
     });
 
-    document.getElementById('resetProgressBtn').addEventListener('click', resetDailyTasks);
-    console.log("Loaded XP:", localStorage.getItem("xp"));
-    console.log("Loaded Level:", localStorage.getItem("level"));
-    document.addEventListener("DOMContentLoaded", () => {
-  // Загружаем сохраненные данные
-  let level = localStorage.getItem("level") ? parseInt(localStorage.getItem("level")) : 1;
-  let xp = localStorage.getItem("xp") ? parseInt(localStorage.getItem("xp")) : 0;
-  const xpThreshold = 1000;
+    
+ // Функция для смены аватарки
+ document.addEventListener("DOMContentLoaded", () => {
+    const avatarInput = document.getElementById("avatarInput");
+    const avatarImg = document.getElementById("avatarImg");
+    const saveAvatarBtn = document.getElementById("saveAvatarBtn");
 
-  console.log("Loaded XP from storage:", xp);
-  console.log("Loaded Level from storage:", level);
-
-  // Обновляем интерфейс при загрузке
-  document.getElementById('level').textContent = level;
-  document.getElementById('xp').textContent = xp;
-
-  function updateLevel() {
-    while (xp >= xpThreshold) {
-      xp -= xpThreshold;
-      level++;
+    // Проверяем, есть ли сохраненный аватар в localStorage
+    const savedAvatar = localStorage.getItem("avatar");
+    if (savedAvatar) {
+      avatarImg.src = savedAvatar;
     }
 
-    // Обновляем интерфейс
-    document.getElementById('level').textContent = level;
-    document.getElementById('xp').textContent = xp;
+    avatarInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          avatarImg.src = e.target.result;
+          localStorage.setItem("avatar", e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
-    // Сохраняем данные в localStorage
-    localStorage.setItem("level", level);
-    localStorage.setItem("xp", xp);
+    saveAvatarBtn.addEventListener("click", () => {
+      localStorage.setItem("avatar", avatarImg.src);
+      alert("Avatar saved successfully!");
+    });
+  });
 
-    console.log("Saved XP:", xp);
-    console.log("Saved Level:", level);
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toDateString();
+    const lastReset = localStorage.getItem("lastResetDate");
 
-  function completeTask(button, taskId, points) {
-    xp += points;
+    if (lastReset !== today) {
+      localStorage.setItem("tasks", JSON.stringify([]));
+      localStorage.setItem("completedTasks", JSON.stringify({}));
+      localStorage.setItem("lastResetDate", today);
+    }
+
     updateLevel();
-
-    button.disabled = true;
-    button.textContent = "✅ Completed";
-
-    // Сохраняем выполненные задачи
-    let completedTasks = JSON.parse(localStorage.getItem("completedTasks")) || {};
-    completedTasks[taskId] = true;
-    localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
-  }
-
-  // При загрузке проверяем выполненные задачи
-  let completedTasks = JSON.parse(localStorage.getItem("completedTasks")) || {};
-  Object.keys(completedTasks).forEach(taskId => {
-    let button = document.getElementById(taskId);
-    if (button) {
-      button.disabled = true;
-      button.textContent = "✅ Completed";
-    }
-  });
-});
-
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  const avatarImg = document.getElementById("avatarImg");
-  const avatarInput = document.getElementById("avatarInput");
-  const saveAvatarBtn = document.getElementById("saveAvatarBtn");
-  const ownedRewardsList = document.getElementById("owned-rewards");
-
-  const savedAvatar = localStorage.getItem("avatar");
-  if (savedAvatar) {
-    avatarImg.src = savedAvatar;
-  }
-
-  saveAvatarBtn.addEventListener("click", () => {
-    const file = avatarInput.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        avatarImg.src = e.target.result;
-        localStorage.setItem("avatar", e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    loadTasks();
   });
 
-  const savedRewards = JSON.parse(localStorage.getItem("ownedRewards")) || [];
-  function renderOwnedRewards() {
-    ownedRewardsList.innerHTML = "";
-    savedRewards.forEach(reward => {
-      const rewardItem = document.createElement("li");
-      rewardItem.classList.add("list-group-item");
-      rewardItem.textContent = reward;
-      ownedRewardsList.appendChild(rewardItem);
+  function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    const completedTasks = JSON.parse(localStorage.getItem("completedTasks")) || {};
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+
+    function showTaskDescription(description) {
+      document.getElementById('taskDescriptionContent').textContent = description;
+      var taskDescriptionModal = new bootstrap.Modal(document.getElementById('taskDescriptionModal'));
+      taskDescriptionModal.show();
+    }
+
+
+
+    tasks.forEach(task => {
+      const newTaskItem = document.createElement("li");
+      newTaskItem.classList.add("task-item");
+      newTaskItem.innerHTML = `
+        <span><strong>${task.name}</strong> (${task.difficulty}) - ${task.description}</span>
+        <button id="${task.id}" onclick="completeTask(this, '${task.id}', ${task.points})">Complete</button>
+        <button onclick="deleteTask('${task.id}')">Delete</button>
+      `;
+      taskList.appendChild(newTaskItem);
+
+      if (completedTasks[task.id]) {
+        const button = document.getElementById(task.id);
+        button.disabled = true;
+        button.textContent = "✅ Completed";
+      }
     });
   }
 
-  window.claimReward = (rewardId, rewardName, rewardPoints) => {
-    let userXP = parseInt(localStorage.getItem("xp")) || 0;
-    if (userXP >= rewardPoints) {
-      userXP -= rewardPoints;
-      localStorage.setItem("xp", userXP);
-      document.getElementById("xp").textContent = userXP;
-      savedRewards.push(rewardName);
-      localStorage.setItem("ownedRewards", JSON.stringify(savedRewards));
-      renderOwnedRewards();
-      alert("You have claimed the reward: " + rewardName);
-    } else {
-      alert("Not enough XP to claim this reward!");
-    }
-  };
+  
 
-  renderOwnedRewards();
-});
+
 
   </script>
 
