@@ -75,7 +75,8 @@
             </div>
             <div class="mb-3">
               <label for="taskDescription" class="form-label">Task Description</label>
-              <textarea class="form-control" id="taskDescription" rows="3" placeholder="Enter task description"></textarea>
+              <textarea class="form-control" id="taskDescription" rows="3"
+                placeholder="Enter task description"></textarea>
             </div>
             <div class="mb-3">
               <label class="form-label">Difficulty Level</label>
@@ -142,8 +143,12 @@
     function completeTask(button, taskId, points) {
       xp += points;
       updateLevel();
+
       button.disabled = true;
       button.textContent = "✅ Completed";
+      button.classList.remove("complete-btn");
+      button.classList.add("completed-btn");
+
       completedTasks[taskId] = true;
       localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
     }
@@ -172,10 +177,12 @@
       const newTaskItem = document.createElement("li");
       newTaskItem.classList.add("task-item");
       newTaskItem.innerHTML = `
-        <span><strong>${taskName}</strong> (${difficulty}) - ${description}</span>
-        <button id="${taskId}" onclick="completeTask(this, '${taskId}', ${points})">Complete</button>
-        <button onclick="deleteTask('${taskId}')">Delete</button>
-      `;
+        <span onclick="showTaskDescription('${description}')"><strong>${taskName}</strong> (${difficulty})</span>
+        
+        <button id="${taskId}" class="complete-btn" onclick="completeTask(this, '${taskId}', ${points})">Complete</button>
+        <button class="delete-btn" onclick="deleteTask('${taskId}')">Delete</button>
+        `;
+
       taskList.appendChild(newTaskItem);
 
       // Save task to localStorage
@@ -200,24 +207,6 @@
       }
     });
 
-    // Edit task
-    // function editTask(taskId) {
-    //   const task = tasks.find(t => t.id === taskId);
-    //   if (task) {
-    //     const newTaskName = prompt("Edit task name", task.name);
-    //     const newPoints = prompt("Edit points", task.points);
-
-    //     if (newTaskName && !isNaN(newPoints) && newPoints > 0) {
-    //       task.name = newTaskName;
-    //       task.points = parseInt(newPoints);
-    //       localStorage.setItem("tasks", JSON.stringify(tasks));
-    //       document.getElementById(taskId).previousElementSibling.textContent = newTaskName;
-    //     } else {
-    //       alert("Invalid input.");
-    //     }
-    //   }
-    // }
-
     // Delete task
     function deleteTask(taskId) {
       tasks = tasks.filter(t => t.id !== taskId);
@@ -236,8 +225,9 @@
         newTaskItem.classList.add("task-item");
         newTaskItem.innerHTML = `
           <span><strong>${task.name}</strong> (${task.difficulty}) - ${task.description}</span>
-          <button id="${task.id}" onclick="completeTask(this, '${task.id}', ${task.points})">Complete</button>
-          <button onclick="deleteTask('${task.id}')">Delete</button>
+
+          <button id="${task.id}" class="complete-btn" onclick="completeTask(this, '${task.id}', ${task.points})">Complete</button>
+          <button class="delete-btn" onclick="deleteTask('${task.id}')">Delete</button>
         `;
         taskList.appendChild(newTaskItem);
 
@@ -246,88 +236,93 @@
           const button = document.getElementById(task.id);
           button.disabled = true;
           button.textContent = "✅ Completed";
+          button.classList.remove("complete-btn");
+          button.classList.add("completed-btn");
+
+          completedTasks[taskId] = true;
+          localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
         }
       });
     });
 
-    
- // Функция для смены аватарки
- document.addEventListener("DOMContentLoaded", () => {
-    const avatarInput = document.getElementById("avatarInput");
-    const avatarImg = document.getElementById("avatarImg");
-    const saveAvatarBtn = document.getElementById("saveAvatarBtn");
 
-    // Проверяем, есть ли сохраненный аватар в localStorage
-    const savedAvatar = localStorage.getItem("avatar");
-    if (savedAvatar) {
-      avatarImg.src = savedAvatar;
-    }
+    // Функция для смены аватарки
+    document.addEventListener("DOMContentLoaded", () => {
+      const avatarInput = document.getElementById("avatarInput");
+      const avatarImg = document.getElementById("avatarImg");
+      const saveAvatarBtn = document.getElementById("saveAvatarBtn");
 
-    avatarInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          avatarImg.src = e.target.result;
-          localStorage.setItem("avatar", e.target.result);
-        };
-        reader.readAsDataURL(file);
+      // Проверяем, есть ли сохраненный аватар в localStorage
+      const savedAvatar = localStorage.getItem("avatar");
+      if (savedAvatar) {
+        avatarImg.src = savedAvatar;
       }
+
+      avatarInput.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            avatarImg.src = e.target.result;
+            localStorage.setItem("avatar", e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      saveAvatarBtn.addEventListener("click", () => {
+        localStorage.setItem("avatar", avatarImg.src);
+        alert("Avatar saved successfully!");
+      });
     });
 
-    saveAvatarBtn.addEventListener("click", () => {
-      localStorage.setItem("avatar", avatarImg.src);
-      alert("Avatar saved successfully!");
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toDateString();
+      const lastReset = localStorage.getItem("lastResetDate");
+
+      if (lastReset !== today) {
+        localStorage.setItem("tasks", JSON.stringify([]));
+        localStorage.setItem("completedTasks", JSON.stringify({}));
+        localStorage.setItem("lastResetDate", today);
+      }
+
+      updateLevel();
+      loadTasks();
     });
-  });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    const today = new Date().toDateString();
-    const lastReset = localStorage.getItem("lastResetDate");
+    function loadTasks() {
+      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      const completedTasks = JSON.parse(localStorage.getItem("completedTasks")) || {};
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = "";
 
-    if (lastReset !== today) {
-      localStorage.setItem("tasks", JSON.stringify([]));
-      localStorage.setItem("completedTasks", JSON.stringify({}));
-      localStorage.setItem("lastResetDate", today);
-    }
-
-    updateLevel();
-    loadTasks();
-  });
-
-  function loadTasks() {
-    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    const completedTasks = JSON.parse(localStorage.getItem("completedTasks")) || {};
-    const taskList = document.getElementById("taskList");
-    taskList.innerHTML = "";
-
-    function showTaskDescription(description) {
-      document.getElementById('taskDescriptionContent').textContent = description;
-      var taskDescriptionModal = new bootstrap.Modal(document.getElementById('taskDescriptionModal'));
-      taskDescriptionModal.show();
-    }
+      function showTaskDescription(description) {
+        document.getElementById('taskDescriptionContent').textContent = description;
+        var taskDescriptionModal = new bootstrap.Modal(document.getElementById('taskDescriptionModal'));
+        taskDescriptionModal.show();
+      }
 
 
 
-    tasks.forEach(task => {
-      const newTaskItem = document.createElement("li");
-      newTaskItem.classList.add("task-item");
-      newTaskItem.innerHTML = `
+      tasks.forEach(task => {
+        const newTaskItem = document.createElement("li");
+        newTaskItem.classList.add("task-item");
+        newTaskItem.innerHTML = `
         <span><strong>${task.name}</strong> (${task.difficulty}) - ${task.description}</span>
         <button id="${task.id}" onclick="completeTask(this, '${task.id}', ${task.points})">Complete</button>
         <button onclick="deleteTask('${task.id}')">Delete</button>
       `;
-      taskList.appendChild(newTaskItem);
+        taskList.appendChild(newTaskItem);
 
-      if (completedTasks[task.id]) {
-        const button = document.getElementById(task.id);
-        button.disabled = true;
-        button.textContent = "✅ Completed";
-      }
-    });
-  }
+        if (completedTasks[task.id]) {
+          const button = document.getElementById(task.id);
+          button.disabled = true;
+          button.textContent = "✅ Completed";
+        }
+      });
+    }
 
-  
+
 
 
 
@@ -336,4 +331,5 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+
 </html>
